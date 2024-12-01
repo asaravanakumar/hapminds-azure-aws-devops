@@ -1,7 +1,20 @@
+trigger:
+- master
+
 pool: Default
 
+variables:
+  azureSubscription: 'AzureRM'  # Azure service connection name
+  kubernetesNamespace: 'default'                      # Kubernetes namespace
+  imageName: 'pythonapp'                   # Container image name
+  imageTag: $(Build.BuildId)                                  # Container image tag
+  imageRegistry: 'adodemo12.azurecr.io'                 # Azure Container Registry name
+  k8sConnectionType: 'kubernetesServiceConnection'
+  k8sServiceConnection: 'AKS service connection'
+  resourceName: 'hello-world-python'
+
 stages:
-  - stage: Dev
+  - stage: Compile
     jobs:
       - job: Compile
         steps:
@@ -12,7 +25,7 @@ stages:
           - script: echo "docker build and push"
 
         
-  - stage: test
+  - stage: Inspection
     jobs:
       - job: sonarqube
         steps:
@@ -31,20 +44,47 @@ stages:
               command: 'buildAndPush'
               Dockerfile: '**/Dockerfile'
 
-  - stage: Deploy
+  - stage: Dev
     jobs:
       - job: Deploy
         displayName: Deploy to Dev Env
         steps:
         - task: AzureContainerApps@1
           inputs:
-            azureSubscription: 'AzureRM'
+            azureSubscription: '$(azureSubscription)'
             acrName: 'adodemo12'
             acrUsername: 'adodemo12'
             acrPassword: 'LAigYNzzbeLAqaEoMh+qT3+NGnecSTE69/bK7NIfXY+ACRA0lmwl'
-            imageToDeploy: 'adodemo12.azurecr.io/pythonapp:$(Build.BuildId)'
+            imageToDeploy: '$(imageRegistry)/$(imageName):$(imageTag)'
             containerAppName: 'productwebsite'
             resourceGroup: 'devops-vm'
             containerAppEnvironment: 'managedEnvironment-devopsvm-bae8'
             targetPort: '80'
             ingress: 'external'
+
+  - stage: Prod
+    jobs:
+      - job: Deploy
+        displayName: Deploy to Prod Env
+        steps:                
+          - task: KubernetesManifest@1
+            displayName: Create secret
+            inputs: 
+              action: 'createSecret'
+              secretType: 'dockerRegistry'
+              secretName: 'registrysecret'
+              dockerRegistryEndpoint: 'myacr'
+              kubernetesServiceConnection: '$(k8sServiceConnection)'
+              namespace: '$(kubernetesNamespace)'
+          - task: KubernetesManifest@1
+            displayName: 'Deploy to AKS'
+            inputs:
+              action: 'deploy'
+              kubernetesServiceConnection: '$(k8sServiceConnection)'
+              namespace: '$(kubernetesNamespace)'
+              manifests: |
+                manifests/deployment.yml
+              containers: |
+                $(imageRegistry)/$(imageName):$(imageTag)
+              imagePullSecrets: |
+                registrysecret
