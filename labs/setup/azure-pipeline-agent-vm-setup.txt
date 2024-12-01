@@ -1,0 +1,294 @@
+1. Launch Ubuntu VM
+2. Connect through Cloudshell
+3. Download and Install pipeline Agent (Refer steps from Organisation -> Settings -> Pipelines -> Agent Pools -> Select Default -> New Agent)
+
+	a. Download Agent
+		https://vstsagentpackage.azureedge.net/agent/4.248.0/vsts-agent-linux-x64-4.248.0.tar.gz
+
+	b. Create Agent
+		mkdir myagent && cd myagent
+		mv vsts-agent-linux-x64-4.248.0.tar.gz magenta
+		tar zxvf vsts-agent-linux-x64-4.248.0.tar.gz
+
+	c. Configure Agent
+		./config.sh
+
+		# Provide below details
+
+		>> End User License Agreements:
+
+		Enter (Y/N) Accept the Team Explorer Everywhere license agreement now? (press enter for N) > Y
+
+		>> Connect:
+
+		Enter server URL > <provide org url e.g: https://dev.azure.com/devops-test010588>
+		Enter personal access token > <enter the pat token generated or generate new token from user settings on top right>
+
+		>> Register Agent: <proceed with default values>
+
+		Enter agent pool (press enter for default) > 
+		Enter agent name (press enter for devops-trainer01-vm) > 
+		Scanning for tool capabilities.
+		Connecting to the server.
+		Successfully added the agent
+		Testing agent connection.
+		Enter work folder (press enter for _work) > 
+		<timestamp>: Settings Saved.
+
+	d. Run Agent (Interactively)
+		cd myagent
+		./run.sh
+	   
+	   Run Agent (Background)
+		cd myagent
+		nohub ./run.sh &
+
+	   Run Agent (Service - Recommended)
+		cd myagent
+		sudo ./svc.sh uninstall
+ 		sudo ./svc.sh install <vm-username>
+   		sudo ./svc.sh start
+   		sudo ./svc.sh status
+		sudo ./svc.sh stop
+
+### Below software required for running Azure CLI commands
+
+4. Azure CLI
+
+	curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+### Below softwares are based on project pipeline requirements
+
+5. Download and Install Docker
+
+	
+   # Post Docker Installation scripts
+	sudo groupadd docker
+	sudo usermod -aG docker $USER
+	newgrp docker
+	sudo systemctl enable docker.service
+ 	sudo systemctl enable containerd.service
+
+6. Download and Install Python
+
+ 	sudo apt update
+	sudo apt install python3
+
+	python3 --version
+
+	sudo apt install python3-pip
+
+	pip3 --version
+
+
+7. Download and Install Java
+
+	sudo apt update
+	sudo apt install openjdk-17-jdk
+
+	java -version
+
+
+8. Download and Install Node JS
+
+	sudo apt update
+	sudo apt install -y curl gnupg
+	curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+	sudo apt install -y nodejs
+
+	node -v
+	npm -v
+
+9. Download and Install Kubectl
+
+	sudo apt-get update
+  	sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
+  	
+	curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  	
+	sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg # allow unprivileged APT programs to read this keyring
+  	
+	echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+ 	
+	sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list
+  	
+	sudo apt-get update
+  	sudo apt-get install -y kubectl
+
+	kubectl version --client
+
+
+9. Download and Install SonarQube (can be setup to as Docker container)
+
+
+a. Create 'sonarqube-compose.yaml' and paste below contents and save
+
+version: "3"
+
+services:
+  sonarqube:
+    image: sonarqube:lts-community
+    depends_on:
+      - db
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    ports:
+      - "9000:9000"
+  db:
+    image: postgres:12
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+    volumes:
+      - postgresql:/var/lib/postgresql
+      - postgresql_data:/var/lib/postgresql/data
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  postgresql:
+  postgresql_data:
+
+b. Run below command to run Sonarqube
+
+	STEP 1:
+
+	docker compose -f sonarqube-compose.yaml up -d
+
+	docker ps (verify sonarqube and postgres containers up)
+
+	STEP 2:
+
+	#Allow inbound port 9000 for the vm
+
+	#Access SonarQube server web interface from below url
+	http://<vm-public-ip>:9000
+	Login Creds: admin/Password@123
+
+	STEP 3:
+
+	#Update project details
+	Goto Administration -> DevOps Platform Integrations -> Azure DevOps -> Delete (existing project) -> Create Configuration
+
+	#Provide below details
+	Configuration Name: <any-meanining-name>
+	Azure DevOps URL: <org-url>
+	Personal Access Token: <project-pat>
+ 
+	STEP 4:
+
+	#List projects
+	Goto Projects -> Azure DevOps -> Enter PAT -> List Repos -> Choose repo -> Setup Selected Repository -> Complete.
+
+	#Skip Install SonarQube extension for Azure DevOps step as it's been already setup as CLI
+
+	STEP 5:
+	
+	#Update sonar-project.properties with below details
+	sonar.host.url=http://<vm-public-ip>:9000/
+   	sonar.login=<sonar-qube-login-token>
+   	sonar.projectKey=<Get from Projects -> select project -> Project Information -> Project Key>
+   	sonar.projectName=<project-name>
+
+	STEP 6: (To stop SonarQube)
+
+	docker compose -f sonarqube-compose.yaml down -d
+ 
+c. Download and install Sonarqube scanner (Pre-requisite: Java should be installed and available)
+
+ 	wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-6.2.1.4610-linux-x64.zip?_gl=1*tdat1m*_gcl_au*MTY1MzQ2Nzc5LjE3MzI5ODEzMDM.*_ga*OTU2MDE4MTc5LjE3MzI5ODEzMDM.*_ga_9JZ0GZ5TC6*MTczMjk4MTMwMy4xLjEuMTczMjk5MTA4NS42MC4wLjA. -O sonar-scanner-cli-6.2.1.4610-linux-x64.zip
+
+  	sudo mkdir -p /opt/sonarqube
+  	sudo mv sonar-scanner-cli-6.2.1.4610-linux-x64.zip /opt/sonarqube/
+  	chown -R devopsuser:devopsuser /opt/sonarqube
+  	sudo chown -R devopsuser:devopsuser /opt/sonarqube
+  	cd /opt/sonarqube/
+	unzip sonar-scanner-cli-6.2.1.4610-linux-x64.zip 
+
+
+
+10) Pipelines Integration with Docker
+
+	STEP 1: Ensure Required Permission Applied (Provisioned by Admin)
+	
+		Azure Portal -> Subscriptions -> Select Subscription -> IAM -> Add Role Assignment -> Privileged Administrator Roles -> User Access Administrator -> Next -> Select Members -> Next -> Under Conditions -> Choose "Allow user to assign all roles except privileged administrator roles Owner, UAA, RBAC (Recommended)" -> Review and Assign
+
+	STEP 2: Enable Managed Identity on Agent VM
+
+	Azure Portal -> VM -> select Agent VM -> Security -> Identity -> Status ON -> Save -> "Object (Principal) ID" will appear and "Permissions" will appear -> Assign Role Assignments -> Add Role assignment -> [ Select below details -> Save ]
+
+	Scope: Subscription
+	Subscription: Pay-As-You-Go
+	Role: AcrPull
+
+	Scope: Subscription
+	Subscription: Pay-As-You-Go
+	Role: AcrPush
+	
+
+	STEP 3: Create Service Connection
+	
+	Goto Project Settings -> Service Connections -> Docker Registry -> Choose Azure Container Registry -> Enter below details.
+
+	Authentication Type -> Managed Identity
+	Subscription ID -> <enter subscription id from Azure Portal -> Subscriptions>
+	Subscription Name -> Pay as you Go
+	Tenant ID -> <Azure Portal -> VM -> filter agent VM -> Security -> Identity -> Status ON -> Save -> copy Object (Principal)
+	Azure Registry Container Login Server -> <Azure Portal -> Container Registries -> select registry -> copy Login Server
+	Service connection name -> <give meaningful name. Ensure this name matches with pipeline containerRegistry)
+	Security -> Enable "Grant access permission to all pipelines" 
+
+
+10) Pipelines Integration with Container App Deployment
+
+	STEP 1: Ensure Required Permission Applied (Provisioned by Admin)
+	
+		Azure Portal -> Subscriptions -> Select Subscription -> IAM -> Add Role Assignment -> Privileged Administrator Roles -> Container Apps Contributor -> Next -> Select Members -> Next -> Under Conditions -> Choose "Allow user to assign all roles except privileged administrator roles Owner, UAA, RBAC (Recommended)" -> Review and Assign
+	
+
+	STEP 2: Create Service Connection
+	
+	Goto Project Settings -> Service Connections -> Azure Resource Manager -> Next -> Select below details -> Save
+
+	Identity Type: App Registration
+	Credential: Workload Identity Federation
+	Scope Level: Choose Subscription
+	Subscription: Auto populated
+	Resource Group: <Choose appropriate Resource Group. Preferred to be same as Agent VM resource group>
+	Service Connection name: <enter meaningful name. Ensure this name matches with pipeline azureSubscription>
+	Security -> Enable "Grant access permission to all pipelines" 
+
+	STEP 3: Update container app deployment task details in pipelines.yaml file
+
+		state: Deploy -> jobs -> jobs: Deploy -> task:  AzureContainerApps@1 -> inputs
+
+		   azureSubscription: '<subcription-name>'
+            acrName: '<acr-name>'
+            acrUsername: '<acr-username>'
+            acrPassword: '<acr-password>'
+            imageToDeploy: '<acr-name>.azurecr.io/<acr-repo-name>:$(Build.BuildId)'
+            containerAppName: '<container-app-name>'
+            resourceGroup: '<resource-group>'
+            containerAppEnvironment: '<container-env-name>'
+            targetPort: '<app-port>'
+            ingress: 'external'	
+
+		   e.g:
+	        azureSubscription: 'AzureRM'
+            acrName: 'adodemo12'
+            acrUsername: 'adodemo12'
+            acrPassword: 'LAigYNzzbeLAqaEoMh+qT3+NGnecSTE69/bK7NIfXY+ACRA0lmwl'
+            imageToDeploy: 'adodemo12.azurecr.io/helloworldpythonapp:$(Build.BuildId)'
+            containerAppName: 'helloworldpythonapp'
+            resourceGroup: 'devops-training'
+            containerAppEnvironment: 'managedEnvironment-devopstraining-hellopy'
+            targetPort: '80'
+            ingress: 'external'
+

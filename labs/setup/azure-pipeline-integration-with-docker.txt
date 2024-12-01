@@ -1,0 +1,33 @@
+
+#### Pipelines Integration with Docker
+
+	STEP 1: Ensure Required Permission Applied (Provisioned by Admin)
+	
+		Azure Portal -> Subscriptions -> Select Subscription -> IAM -> Add Role Assignment -> Privileged Administrator Roles -> User Access Administrator -> Next -> Select Members -> Next -> Under Conditions -> Choose "Allow user to assign all roles except privileged administrator roles Owner, UAA, RBAC (Recommended)" -> Review and Assign
+
+	STEP 2: Enable Managed Identity on Agent VM
+
+	Azure Portal -> VM -> select Agent VM -> Security -> Identity -> Status ON -> Save -> "Object (Principal) ID" will appear and "Permissions" will appear -> Assign Role Assignments -> Add Role assignment -> [ Select below details -> Save ]
+
+	Scope: Subscription
+	Subscription: Pay-As-You-Go
+	Role: AcrPull
+
+	Scope: Subscription
+	Subscription: Pay-As-You-Go
+	Role: AcrPush
+	
+
+	STEP 3: Create Service Connection
+	
+	Goto Project Settings -> Service Connections -> Docker Registry -> Choose Azure Container Registry -> Enter below details.
+
+	Authentication Type -> Managed Identity
+	Subscription ID -> <enter subscription id from Azure Portal -> Subscriptions>
+	Subscription Name -> Pay as you Go
+	Tenant ID -> <Azure Portal -> VM -> filter agent VM -> Security -> Identity -> Status ON -> Save -> copy Object (Principal)
+	Azure Registry Container Login Server -> <Azure Portal -> Container Registries -> select registry -> copy Login Server
+	Service connection name -> <give meaningful name. Ensure this name matches with pipeline containerRegistry)
+	Security -> Enable "Grant access permission to all pipelines" 
+
+	STEP 4: Run Pipeline with Docker integration

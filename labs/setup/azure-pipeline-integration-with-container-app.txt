@@ -1,0 +1,48 @@
+
+### Pipelines Integration with Container App Deployment
+
+	STEP 1: Ensure Required Permission Applied (Provisioned by Admin)
+	
+		Azure Portal -> Subscriptions -> Select Subscription -> IAM -> Add Role Assignment -> Privileged Administrator Roles -> Container Apps Contributor -> Next -> Select Members -> Next -> Under Conditions -> Choose "Allow user to assign all roles except privileged administrator roles Owner, UAA, RBAC (Recommended)" -> Review and Assign
+	
+
+	STEP 2: Create Service Connection
+	
+	Goto Project Settings -> Service Connections -> Azure Resource Manager -> Next -> Select below details -> Save
+
+	Identity Type: App Registration
+	Credential: Workload Identity Federation
+	Scope Level: Choose Subscription
+	Subscription: Auto populated
+	Resource Group: <Choose appropriate Resource Group. Preferred to be same as Agent VM resource group>
+	Service Connection name: <enter meaningful name. Ensure this name matches with pipeline azureSubscription>
+	Security -> Enable "Grant access permission to all pipelines" 
+
+	STEP 3: Update container app deployment task details in pipelines.yaml file
+
+		state: Deploy -> jobs -> jobs: Deploy -> task:  AzureContainerApps@1 -> inputs
+
+		   azureSubscription: '<subcription-name>'
+            acrName: '<acr-name>'
+            acrUsername: '<acr-username>'
+            acrPassword: '<acr-password>'
+            imageToDeploy: '<acr-name>.azurecr.io/<acr-repo-name>:$(Build.BuildId)'
+            containerAppName: '<container-app-name>'
+            resourceGroup: '<resource-group>'
+            containerAppEnvironment: '<container-env-name>'
+            targetPort: '<app-port>'
+            ingress: 'external'	
+
+		   e.g:
+	        azureSubscription: 'AzureRM'
+            acrName: 'adodemo12'
+            acrUsername: 'adodemo12'
+            acrPassword: 'LAigYNzzbeLAqaEoMh+qT3+NGnecSTE69/bK7NIfXY+ACRA0lmwl'
+            imageToDeploy: 'adodemo12.azurecr.io/helloworldpythonapp:$(Build.BuildId)'
+            containerAppName: 'helloworldpythonapp'
+            resourceGroup: 'devops-training'
+            containerAppEnvironment: 'managedEnvironment-devopstraining-hellopy'
+            targetPort: '80'
+            ingress: 'external'
+
+	STEP 4: Run Pipeline with App Container Deployment
