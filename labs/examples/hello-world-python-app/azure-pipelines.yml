@@ -1,0 +1,50 @@
+pool: Default
+
+stages:
+  - stage: Dev
+    jobs:
+      - job: Compile
+        steps:
+          - script: echo "Hello World"
+      - job: RunUnittest
+        steps:
+          - script: date
+          - script: echo "docker build and push"
+
+        
+  - stage: test
+    jobs:
+      - job: sonarqube
+        steps:
+          - script: echo "Test should run here"
+          - script: /opt/sonarqube/sonar-scanner-6.2.1.4610-linux-x64/bin/sonar-scanner 
+
+  - stage: publish
+    jobs:
+      - job: publish
+        displayName: Docker build and publish
+        steps:
+          - task: Docker@2
+            inputs:
+              containerRegistry: 'myacr'
+              repository: 'pythonapp'
+              command: 'buildAndPush'
+              Dockerfile: '**/Dockerfile'
+
+  - stage: Deploy
+    jobs:
+      - job: Deploy
+        displayName: Deploy to Dev Env
+        steps:
+        - task: AzureContainerApps@1
+          inputs:
+            azureSubscription: 'AzureRM'
+            acrName: 'adodemo12'
+            acrUsername: 'adodemo12'
+            acrPassword: 'LAigYNzzbeLAqaEoMh+qT3+NGnecSTE69/bK7NIfXY+ACRA0lmwl'
+            imageToDeploy: 'adodemo12.azurecr.io/pythonapp:$(Build.BuildId)'
+            containerAppName: 'productwebsite'
+            resourceGroup: 'devops-vm'
+            containerAppEnvironment: 'managedEnvironment-devopsvm-bae8'
+            targetPort: '80'
+            ingress: 'external'
