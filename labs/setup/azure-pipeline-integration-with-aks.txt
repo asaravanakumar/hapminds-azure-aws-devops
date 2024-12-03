@@ -1,0 +1,7 @@
+---------- deploy to AKS ----- 401 unathorized error -  working solution
+az aks update --name devops-k8s-demo --resource-group devops-k8s --attach-acr adodemo12
+
+az aks update --name myAKSCluster --resource-group myResourceGroup --attach-acr <acr-name>
+
+refer: https://learn.microsoft.com/en-us/azure/aks/cluster-container-registry-integration?tabs=azure-cli#attach-an-acr-to-an-existing-aks-cluster
+------------------------------------------------------
