@@ -9,4 +9,8 @@ public class Main {
             System.out.println("i = " + i);
         }
     }
+
+    public int add(int a, int b) {
+        return a+b;
+    }
 }

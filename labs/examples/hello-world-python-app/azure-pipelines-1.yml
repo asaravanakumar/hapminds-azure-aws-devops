@@ -1,0 +1,46 @@
+trigger:
+- master
+
+pool: Default
+
+variables:
+  azureSubscription: 'AzureRM'  # Azure service connection name
+  kubernetesNamespace: 'default'                      # Kubernetes namespace
+  imageName: 'pythonapp'                   # Container image name
+  imageTag: $(Build.BuildId)                                  # Container image tag
+  imageRegistry: 'adodemo12.azurecr.io'                 # Azure Container Registry name
+  k8sConnectionType: 'kubernetesServiceConnection'
+  k8sServiceConnection: 'AKS service connection'
+  resourceName: 'hello-world-python'
+
+stages:
+  - stage: Compile
+    jobs:
+      - job: Compile
+        steps:
+          - script: echo "Hello World"
+      - job: RunUnittest
+        steps:
+          - script: date
+          - script: echo "docker build and push"
+
+        
+  - stage: Inspection
+    jobs:
+      - job: sonarqube
+        steps:
+          - script: echo "Test should run here"
+          - script: /opt/sonarqube/sonar-scanner-6.2.1.4610-linux-x64/bin/sonar-scanner 
+
+  - stage: publish
+    jobs:
+      - job: publish
+        displayName: Docker build and publish
+        steps:
+          - task: Docker@2
+            inputs:
+              containerRegistry: 'myacr'
+              repository: 'pythonapp'
+              command: 'build'
+              Dockerfile: '**/Dockerfile'
+

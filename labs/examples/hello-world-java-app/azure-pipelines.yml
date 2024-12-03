@@ -1,0 +1,108 @@
+trigger:
+- master
+
+pool: Default
+
+variables:
+  azureSubscription: 'AzureRM'  # Azure service connection name
+  kubernetesNamespace: 'default'                      # Kubernetes namespace
+  imageName: 'javawebapp'                   # Container image name
+  repositoryName: 'javawebapp'
+  imageTag: $(Build.BuildId)                                  # Container image tag
+  imageRegistry: 'adodemo12.azurecr.io'                 # Azure Container Registry name
+  k8sConnectionType: 'kubernetesServiceConnection'
+  k8sServiceConnection: 'AKS service connection'
+  resourceName: 'hello-world-python'
+
+stages:
+  - stage: Compile
+    jobs:
+      - job: Compile
+        steps:
+          - script: /opt/apache-maven/apache-maven-3.9.9/bin/mvn install
+          - script: /opt/sonarqube/sonar-scanner-6.2.1.4610-linux-x64/bin/sonar-scanner 
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/TEST-*.xml'
+              testRunTitle: 'Unittest'
+      # - job: sonarqube
+      #   dependsOn: Compile
+      #   steps:
+      #     - script: /opt/sonarqube/sonar-scanner-6.2.1.4610-linux-x64/bin/sonar-scanner 
+
+  - stage: publish
+    jobs:
+      - job: Package
+        steps:
+          - script: /opt/apache-maven/apache-maven-3.9.9/bin/mvn install
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: '$(System.DefaultWorkingDirectory)'
+              artifactName: jar
+      - job: Test
+        dependsOn: Package
+        steps:
+          - script: /opt/apache-maven/apache-maven-3.9.9/bin/mvn surefire-report:report-only
+      - job: Publish
+        dependsOn: Test
+        displayName: Docker build and publish
+        steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download Build Artifacts'
+            inputs:
+              artifactName: jar
+              downloadPath: '$(System.DefaultWorkingDirectory)'
+          
+          - task: Docker@2
+            inputs:
+              containerRegistry: 'myacr'
+              repository: '$(repositoryName)'
+              # command: 'buildAndPush'
+              command: 'build'
+              Dockerfile: '**/Dockerfile'
+
+  # - stage: Dev
+  #   jobs:
+  #     - job: Deploy
+  #       displayName: Deploy to Dev Env
+  #       steps:
+  #       - task: AzureContainerApps@1
+  #         inputs:
+  #           azureSubscription: '$(azureSubscription)'
+  #           acrName: 'adodemo12'
+  #           acrUsername: 'adodemo12'
+  #           acrPassword: 'LAigYNzzbeLAqaEoMh+qT3+NGnecSTE69/bK7NIfXY+ACRA0lmwl'
+  #           imageToDeploy: '$(imageRegistry)/$(imageName):$(imageTag)'
+  #           containerAppName: 'productwebsite'
+  #           resourceGroup: 'devops-vm'
+  #           containerAppEnvironment: 'managedEnvironment-devopsvm-bae8'
+  #           targetPort: '80'
+  #           ingress: 'external'
+
+  # - stage: Prod
+  #   jobs:
+  #     - job: Deploy
+  #       displayName: Deploy to Prod Env
+  #       steps:                
+  #         - task: KubernetesManifest@1
+  #           displayName: Create secret
+  #           inputs: 
+  #             action: 'createSecret'
+  #             secretType: 'dockerRegistry'
+  #             secretName: 'registrysecret'
+  #             dockerRegistryEndpoint: 'myacr'
+  #             kubernetesServiceConnection: '$(k8sServiceConnection)'
+  #             namespace: '$(kubernetesNamespace)'
+  #         - task: KubernetesManifest@1
+  #           displayName: 'Deploy to AKS'
+  #           inputs:
+  #             action: 'deploy'
+  #             kubernetesServiceConnection: '$(k8sServiceConnection)'
+  #             namespace: '$(kubernetesNamespace)'
+  #             manifests: |
+  #               manifests/deployment.yml
+  #             containers: |
+  #               $(imageRegistry)/$(imageName):$(imageTag)
+  #             imagePullSecrets: |
+  #               registrysecret
