@@ -1,0 +1,26 @@
+STEP 1: Login into Azure Portal with given user credentials
+
+STEP 2: Create Resourcce Group under South-India region e.g: devops-user15
+
+STEP 3: Create VM under the Resource Group / South-India - devops-user15-vm
+
+STEP 4: Connect to VM and Dowload and Setup Agent
+
+STEP 5; Configure Agent
+               Server URL: <azure-devops-org-url>
+               PAT: <generate-from-user-settings -> PAT>
+
+STEP 6: Start Agent
+
+
+STEP 7: Goto DevOps portal and edit pipelines to use self hosted agent pool and commit
+
+              azure-pipelines.yaml
+
+              pool: Default
+
+STEP 8: Pipeline triggerred and queued
+
+STEP 9: Permit access to pipeline to use default agentpool
+
+STEP10: Verify the pipeline status and it should be completed successfully
