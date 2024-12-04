@@ -7,7 +7,7 @@
 
 	b. Create Agent
 		mkdir myagent
-		mv vsts-agent-linux-x64-4.248.0.tar.gz magenta
+		mv vsts-agent-linux-x64-4.248.0.tar.gz myagent
 		cd myagent
 		tar zxvf vsts-agent-linux-x64-4.248.0.tar.gz
 
