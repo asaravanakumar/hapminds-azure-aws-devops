@@ -6,8 +6,9 @@
 		https://vstsagentpackage.azureedge.net/agent/4.248.0/vsts-agent-linux-x64-4.248.0.tar.gz
 
 	b. Create Agent
-		mkdir myagent && cd myagent
+		mkdir myagent
 		mv vsts-agent-linux-x64-4.248.0.tar.gz magenta
+		cd myagent
 		tar zxvf vsts-agent-linux-x64-4.248.0.tar.gz
 
 	c. Configure Agent
