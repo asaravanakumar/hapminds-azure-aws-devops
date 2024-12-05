@@ -36,21 +36,23 @@
 		Enter work folder (press enter for _work) > 
 		<timestamp>: Settings Saved.
 
-	d. Run Agent (Interactively)
-		cd myagent
-		./run.sh
-	   
-	   Run Agent (Background)
-		cd myagent
-		nohub ./run.sh &
-
-	   Run Agent (Service - Recommended)
+	d. Run Agent (Service - Recommended)
 		cd myagent
 		sudo ./svc.sh uninstall
  		sudo ./svc.sh install <vm-username>
    		sudo ./svc.sh start
    		sudo ./svc.sh status
 		sudo ./svc.sh stop
+		
+		##Below are alternative ways
+		
+		Run Agent (Interactively)
+		cd myagent
+		./run.sh
+	   
+	   Run Agent (Background)
+		cd myagent
+		nohub ./run.sh &
 
 ### Below software required for running Azure CLI commands
 
@@ -194,8 +196,8 @@ b. Run below command to run Sonarqube
 	
 	#Update sonar-project.properties with below details
 	sonar.host.url=http://<vm-public-ip>:9000/
-   	sonar.login=<sonar-qube-login-token>
-   	sonar.projectKey=<Get from Projects -> select project -> Project Information -> Project Key>
+   	sonar.login=<Click on Login User (top right) -> My Account -> Security -> Generate Tokens -> Enter token name -> Project Analysis Token -> Generate Token>
+   	sonar.projectKey=<Get from SonarQube Projects -> select project -> Project Information -> Project Key>
    	sonar.projectName=<project-name>
 
 	STEP 6: (To stop SonarQube)

@@ -1,3 +1,20 @@
+### Pipelines Integration with K8s Deployment
+
+
+STEP 1: Create new AKS cluster or Have details of existing AKS cluster where we gonna deploy the app
+
+STEP 2: Create Service Connection for K8s
+
+
+STEP 3: Add manifests/deployment.yml into hello-world-python-app repo and commit with below changes
+              a. Update app name, labels of Deployment and Service to prefix the user name e.g: devops-user15-hello-world-python
+              a.  Update image to refer appropriate ACR repository name 
+
+STEP 4: Update pipelines yaml to deploy into K8s
+
+
+STEP 5: Permit K8s cluster to access ACR registry - execute the below command from Agent VM or Cloudshell (Optional - Need to do only if connecting to different ACR )
+
 ---------- deploy to AKS ----- 401 unathorized error -  working solution
 az aks update --name devops-k8s-demo --resource-group devops-k8s --attach-acr adodemo12
 
