@@ -1,0 +1,59 @@
+trigger:
+  - master
+
+pool: Default
+
+variables:
+  azureSubscription: 'AzureRM'  # Azure service connection name
+  imageName: 'devops-user15-pythonapp'                   # Container image name
+  imageTag: $(Build.BuildId)                                  # Container image tag
+  imageRegistry: 'adodemo12.azurecr.io'                 # Azure Container Registry name
+  resourceName: 'hello-world-python'
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Compile
+        steps:
+          - script: echo "Hello World"
+      - job: RunUnittest
+        steps:
+          - script: date
+          - script: echo "Running Unit Test cases"
+
+  - stage: Inspection
+    jobs:
+      - job: sonarqube
+        steps:
+          - script: echo "Code Inspection Started"
+          - script: /opt/sonarqube/sonar-scanner-6.2.1.4610-linux-x64/bin/sonar-scanner
+          
+  - stage: publish
+    jobs:
+      - job: publish
+        displayName: Docker build and publish
+        steps:
+          - task: Docker@2
+            inputs:
+              containerRegistry: "devops-user15-acr-connection"
+              repository: "devops-user15-pythonapp"
+              # command: "build"
+              command: "buildAndPush"
+              Dockerfile: "**/Dockerfile"
+  - stage: deploy
+    jobs:
+      - job: Deploy
+        displayName: Deploy to Dev Env
+        steps:
+        - task: AzureContainerApps@1
+          inputs:
+            azureSubscription: '$(azureSubscription)'
+            acrName: 'adodemo12'
+            acrUsername: 'adodemo12'
+            acrPassword: 'LAigYNzzbeLAqaEoMh+qT3+NGnecSTE69/bK7NIfXY+ACRA0lmwl'
+            imageToDeploy: '$(imageRegistry)/$(imageName):$(imageTag)'
+            containerAppName: 'devops-user15-pythonapp'
+            resourceGroup: 'devops-user15'
+            containerAppEnvironment: 'managedEnvironment-devops-user15-dev'
+            targetPort: '80'
+            ingress: 'external'
