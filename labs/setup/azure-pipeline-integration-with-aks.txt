@@ -5,6 +5,16 @@ STEP 1: Create new AKS cluster or Have details of existing AKS cluster where we 
 
 STEP 2: Create Service Connection for K8s
 
+Goto Project Settings -> Service Connections -> Kubernetes -> Next -> Select below details -> Save
+
+	Authentication Method: Azure Subscription
+	Azure Subscription: Pay As You Go
+	Cluster: <select the k8s where you want to deploy>
+	Namespace: default
+	Service Connection Name: <enter meaningful name. Ensure this name matches with pipeline k8sServiceConnection>
+	Security -> Enable "Grant access permission to all pipelines" 
+
+
 
 STEP 3: Add manifests/deployment.yml into hello-world-python-app repo and commit with below changes
               a. Update app name, labels of Deployment and Service to prefix the user name e.g: devops-user15-hello-world-python
