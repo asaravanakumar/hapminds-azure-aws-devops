@@ -19,7 +19,7 @@ STEP 7: Goto DevOps portal and edit pipelines to use self hosted agent pool and 
 
               pool: Default
 
-STEP 8: Pipeline triggerred and queued
+STEP 8: Pipeline triggered and queued
 
 STEP 9: Permit access to pipeline to use default agentpool
 

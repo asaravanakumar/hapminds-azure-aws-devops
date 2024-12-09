@@ -1,5 +1,5 @@
 1. Launch Ubuntu VM
-2. Connect through Cloudshell
+2. Connect through Cloudshell or SSH
 3. Download and Install pipeline Agent (Refer steps from Organisation -> Settings -> Pipelines -> Agent Pools -> Select Default -> New Agent)
 
 	a. Download Agent
@@ -63,6 +63,22 @@
 ### Below softwares are based on project pipeline requirements
 
 5. Download and Install Docker
+
+	a. Download the script
+	
+		curl -fsSL https://get.docker.com -o install-docker.sh
+
+	b. Verify the script's content
+
+		cat install-docker.sh
+
+	c. Run the script with --dry-run to verify the steps it executes
+
+	  	sh install-docker.sh --dry-run
+
+	d. Run the script either as root, or using sudo to perform the installation.
+		
+		sudo sh install-docker.sh
 
 	
    # Post Docker Installation scripts
